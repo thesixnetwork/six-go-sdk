@@ -3,23 +3,26 @@ package keys
 import (
 	"crypto/sha256"
 	"encoding/hex"
-	"encoding/json"
 	"fmt"
-	"io/ioutil"
 	"strings"
 
 	"github.com/cosmos/go-bip39"
+	"github.com/gofrs/uuid"
+	"github.com/tendermint/go-amino"
+	"github.com/tendermint/tendermint/crypto"
+	"github.com/tendermint/tendermint/crypto/secp256k1"
+	"github.com/thesixnetwork/six-go-sdk/common"
+	"github.com/thesixnetwork/six-go-sdk/common/ledger"
 	"golang.org/x/crypto/pbkdf2"
 	"golang.org/x/crypto/sha3"
 
-	"github.com/tendermint/tendermint/crypto/secp256k1"
-
-	"github.com/tendermint/tendermint/crypto"
-	"github.com/thesixnetwork/six-go-sdk/common"
+	// "github.com/thesixnetwork/six-go-sdk/common"
 	// "github.com/thesixnetwork/six-go-sdk/common/ledger"
+
 	"github.com/thesixnetwork/six-go-sdk/common/types"
 	ctypes "github.com/thesixnetwork/six-go-sdk/common/types"
-	"github.com/thesixnetwork/six-go-sdk/common/uuid"
+
+	// "github.com/thesixnetwork/six-go-sdk/common/uuid"
 	"github.com/thesixnetwork/six-go-sdk/types/tx"
 )
 
@@ -45,17 +48,17 @@ func NewMnemonicKeyManager(mnemonic string) (KeyManager, error) {
 
 // The full path is  "purpose' / coin_type' / account' / change / address_index".
 // "purpose' / coin_type'" is fixed as "44'/714'/", user can customize the rest part.
-func NewMnemonicPathKeyManager(mnemonic, keyPath string) (KeyManager, error) {
-	k := keyManager{}
-	err := k.recoveryFromMnemonic(mnemonic, BIP44Prefix+keyPath)
-	return &k, err
-}
+// func NewMnemonicPathKeyManager(mnemonic, keyPath string) (KeyManager, error) {
+// 	k := keyManager{}
+// 	err := k.recoveryFromMnemonic(mnemonic, BIP44Prefix+keyPath)
+// 	return &k, err
+// }
 
-func NewKeyStoreKeyManager(file string, auth string) (KeyManager, error) {
-	k := keyManager{}
-	err := k.recoveryFromKeyStore(file, auth)
-	return &k, err
-}
+// func NewKeyStoreKeyManager(file string, auth string) (KeyManager, error) {
+// 	k := keyManager{}
+// 	err := k.recoveryFromKeyStore(file, auth)
+// 	return &k, err
+// }
 
 func NewPrivateKeyManager(priKey string) (KeyManager, error) {
 	k := keyManager{}
@@ -63,11 +66,11 @@ func NewPrivateKeyManager(priKey string) (KeyManager, error) {
 	return &k, err
 }
 
-// func NewLedgerKeyManager(path ledger.DerivationPath) (KeyManager, error) {
-// 	k := keyManager{}
-// 	err := k.recoveryFromLedgerKey(path)
-// 	return &k, err
-// }
+// // func NewLedgerKeyManager(path ledger.DerivationPath) (KeyManager, error) {
+// // 	k := keyManager{}
+// // 	err := k.recoveryFromLedgerKey(path)
+// // 	return &k, err
+// // }
 
 type keyManager struct {
 	privKey  crypto.PrivKey
@@ -83,7 +86,7 @@ func (m *keyManager) ExportAsMnemonic() (string, error) {
 }
 
 func (m *keyManager) ExportAsPrivateKey() (string, error) {
-	secpPrivateKey, ok := m.privKey.(secp256k1.PrivKeySecp256k1)
+	secpPrivateKey, ok := m.privKey.(secp256k1.PrivKey)
 	if !ok {
 		return "", fmt.Errorf(" Only PrivKeySecp256k1 key is supported ")
 	}
@@ -121,7 +124,9 @@ func (m *keyManager) recoveryFromMnemonic(mnemonic, keyPath string) error {
 	if err != nil {
 		return err
 	}
-	priKey := secp256k1.PrivKeySecp256k1(derivedPriv)
+
+	// TODO: FIX
+	priKey := secp256k1.PrivKey(derivedPriv[:])
 	addr := ctypes.AccAddress(priKey.PubKey().Address())
 	if err != nil {
 		return err
@@ -132,34 +137,34 @@ func (m *keyManager) recoveryFromMnemonic(mnemonic, keyPath string) error {
 	return nil
 }
 
-func (m *keyManager) recoveryFromKeyStore(keystoreFile string, auth string) error {
-	if auth == "" {
-		return fmt.Errorf("Password is missing ")
-	}
-	keyJson, err := ioutil.ReadFile(keystoreFile)
-	if err != nil {
-		return err
-	}
-	var encryptedKey EncryptedKeyJSON
-	err = json.Unmarshal(keyJson, &encryptedKey)
-	if err != nil {
-		return err
-	}
-	keyBytes, err := decryptKey(&encryptedKey, auth)
-	if err != nil {
-		return err
-	}
-	if len(keyBytes) != 32 {
-		return fmt.Errorf("Len of Keybytes is not equal to 32 ")
-	}
-	var keyBytesArray [32]byte
-	copy(keyBytesArray[:], keyBytes[:32])
-	priKey := secp256k1.PrivKeySecp256k1(keyBytesArray)
-	addr := ctypes.AccAddress(priKey.PubKey().Address())
-	m.addr = addr
-	m.privKey = priKey
-	return nil
-}
+// func (m *keyManager) recoveryFromKeyStore(keystoreFile string, auth string) error {
+// 	if auth == "" {
+// 		return fmt.Errorf("Password is missing ")
+// 	}
+// 	keyJson, err := ioutil.ReadFile(keystoreFile)
+// 	if err != nil {
+// 		return err
+// 	}
+// 	var encryptedKey EncryptedKeyJSON
+// 	err = json.Unmarshal(keyJson, &encryptedKey)
+// 	if err != nil {
+// 		return err
+// 	}
+// 	keyBytes, err := decryptKey(&encryptedKey, auth)
+// 	if err != nil {
+// 		return err
+// 	}
+// 	if len(keyBytes) != 32 {
+// 		return fmt.Errorf("Len of Keybytes is not equal to 32 ")
+// 	}
+// 	var keyBytesArray [32]byte
+// 	copy(keyBytesArray[:], keyBytes[:32])
+// 	priKey := secp256k1.PrivKeySecp256k1(keyBytesArray)
+// 	addr := ctypes.AccAddress(priKey.PubKey().Address())
+// 	m.addr = addr
+// 	m.privKey = priKey
+// 	return nil
+// }
 
 func (m *keyManager) recoveryFromPrivateKey(privateKey string) error {
 	priBytes, err := hex.DecodeString(privateKey)
@@ -172,7 +177,7 @@ func (m *keyManager) recoveryFromPrivateKey(privateKey string) error {
 	}
 	var keyBytesArray [32]byte
 	copy(keyBytesArray[:], priBytes[:32])
-	priKey := secp256k1.PrivKeySecp256k1(keyBytesArray)
+	priKey := secp256k1.PrivKey(keyBytesArray[:])
 	addr := ctypes.AccAddress(priKey.PubKey().Address())
 	m.addr = addr
 	m.privKey = priKey
@@ -206,7 +211,10 @@ func (m *keyManager) Sign(msg tx.StdSignMsg) ([]byte, error) {
 		return nil, err
 	}
 	newTx := tx.NewStdTx(msg.Msgs, []tx.StdSignature{sig}, msg.Memo, msg.Source, msg.Data)
-	bz, err := tx.Cdc.MarshalBinaryLengthPrefixed(&newTx)
+	// TODO: FIX
+	bz, err := amino.MarshalBinaryLengthPrefixed(&newTx)
+
+	//tx.Cdc.MarshalBinaryLengthPrefixed(&newTx)
 	if err != nil {
 		return nil, err
 	}
@@ -256,7 +264,7 @@ func generateKeyStore(privateKey crypto.PrivKey, password string) (*EncryptedKey
 	cipherParamsJSON := cipherparamsJSON{IV: hex.EncodeToString(iv)}
 	derivedKey := pbkdf2.Key([]byte(password), salt, 262144, 32, sha256.New)
 	encryptKey := derivedKey[:32]
-	secpPrivateKey, ok := privateKey.(secp256k1.PrivKeySecp256k1)
+	secpPrivateKey, ok := privateKey.(secp256k1.PrivKey)
 	if !ok {
 		return nil, fmt.Errorf(" Only PrivKeySecp256k1 key is supported ")
 	}
