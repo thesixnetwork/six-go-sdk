@@ -3,15 +3,16 @@
 // import (
 // 	"time"
 
-// 	"github.com/cosmos/cosmos-sdk/types"
-// 	cmn "github.com/tendermint/tendermint/libs"
+// 	by "github.com/tendermint/tendermint/libs/bytes"
+// 	sv "github.com/tendermint/tendermint/libs/service"
 // 	"github.com/tendermint/tendermint/rpc/client"
 // 	ctypes "github.com/tendermint/tendermint/rpc/core/types"
 // 	"github.com/tendermint/tendermint/rpc/lib/client"
+// 	"github.com/tendermint/tendermint/types"
 
-// 	ntypes "github.com/thesixnetwork/six-go-sdk/common/types"
-// 	"github.com/thesixnetwork/six-go-sdk/keys"
-// 	"github.com/thesixnetwork/six-go-sdk/types/tx"
+// 	ntypes "github.com/binance-chain/go-sdk/common/types"
+// 	"github.com/binance-chain/go-sdk/keys"
+// 	"github.com/binance-chain/go-sdk/types/tx"
 // )
 
 // var DefaultTimeout = 5 * time.Second
@@ -19,8 +20,8 @@
 // type ABCIClient interface {
 // 	// Reading from abci app
 // 	ABCIInfo() (*ctypes.ResultABCIInfo, error)
-// 	ABCIQuery(path string, data cmn.HexBytes) (*ctypes.ResultABCIQuery, error)
-// 	ABCIQueryWithOptions(path string, data cmn.HexBytes,
+// 	ABCIQuery(path string, data by.HexBytes) (*ctypes.ResultABCIQuery, error)
+// 	ABCIQueryWithOptions(path string, data by.HexBytes,
 // 		opts client.ABCIQueryOptions) (*ctypes.ResultABCIQuery, error)
 
 // 	// Writing to abci app
@@ -39,7 +40,7 @@
 // }
 
 // type Client interface {
-// 	cmn.Service
+// 	sv.Service
 // 	ABCIClient
 // 	SignClient
 // 	client.HistoryClient
@@ -85,27 +86,27 @@
 // 	return client
 // }
 
-// // func (c *HTTP) Status() (*ctypes.ResultStatus, error) {
-// // 	return c.WSEvents.Status()
-// // }
+// func (c *HTTP) Status() (*ctypes.ResultStatus, error) {
+// 	return c.WSEvents.Status()
+// }
 
-// // func (c *HTTP) ABCIInfo() (*ctypes.ResultABCIInfo, error) {
-// // 	return c.WSEvents.ABCIInfo()
-// // }
+// func (c *HTTP) ABCIInfo() (*ctypes.ResultABCIInfo, error) {
+// 	return c.WSEvents.ABCIInfo()
+// }
 
-// // func (c *HTTP) ABCIQuery(path string, data cmn.HexBytes) (*ctypes.ResultABCIQuery, error) {
-// // 	return c.ABCIQueryWithOptions(path, data, client.DefaultABCIQueryOptions)
-// // }
+// func (c *HTTP) ABCIQuery(path string, data by.HexBytes) (*ctypes.ResultABCIQuery, error) {
+// 	return c.ABCIQueryWithOptions(path, data, client.DefaultABCIQueryOptions)
+// }
 
-// // func (c *HTTP) ABCIQueryWithOptions(path string, data cmn.HexBytes, opts client.ABCIQueryOptions) (*ctypes.ResultABCIQuery, error) {
-// // 	if err := ValidateABCIPath(path); err != nil {
-// // 		return nil, err
-// // 	}
-// // 	if err := ValidateABCIData(data); err != nil {
-// // 		return nil, err
-// // 	}
-// // 	return c.WSEvents.ABCIQueryWithOptions(path, data, opts)
-// // }
+// func (c *HTTP) ABCIQueryWithOptions(path string, data by.HexBytes, opts client.ABCIQueryOptions) (*ctypes.ResultABCIQuery, error) {
+// 	if err := ValidateABCIPath(path); err != nil {
+// 		return nil, err
+// 	}
+// 	if err := ValidateABCIData(data); err != nil {
+// 		return nil, err
+// 	}
+// 	return c.WSEvents.ABCIQueryWithOptions(path, data, opts)
+// }
 
 // // func (c *HTTP) BroadcastTxCommit(tx types.Tx) (*ResultBroadcastTxCommit, error) {
 // // 	if err := ValidateTx(tx); err != nil {
@@ -261,6 +262,6 @@
 // // 	return
 // // }
 
-// func (c *HTTP) SetKeyManager(k keys.KeyManager) {
-// 	c.key = k
-// }
+// // func (c *HTTP) SetKeyManager(k keys.KeyManager) {
+// // 	c.key = k
+// // }
